@@ -1,0 +1,445 @@
+{
+    "properties": {
+        "provisioningState": "Succeeded",
+        "createdTime": "2025-04-06T04:10:53.1501821Z",
+        "changedTime": "2025-04-09T11:19:47.774482Z",
+        "state": "Disabled",
+        "version": "08584574092977389053",
+        "accessEndpoint": "https://prod-04.canadacentral.logic.azure.com:443/workflows/d6c82f35aef74d47a9a0fdbb44bd45fa",
+        "definition": {
+            "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+                "$connections": {
+                    "defaultValue": {},
+                    "type": "Object"
+                }
+            },
+            "triggers": {
+                "Recurrence": {
+                    "recurrence": {
+                        "interval": 2,
+                        "frequency": "Day",
+                        "timeZone": "India Standard Time"
+                    },
+                    "evaluatedRecurrence": {
+                        "interval": 2,
+                        "frequency": "Day",
+                        "timeZone": "India Standard Time"
+                    },
+                    "type": "Recurrence"
+                }
+            },
+            "actions": {
+                "HTTP": {
+                    "runAfter": {},
+                    "type": "Http",
+                    "inputs": {
+                        "uri": "https://api.openweathermap.org/data/2.5/weather?q=Punjab,india&APPID=8e239518fd47105617316d660ea5e598&units=metric",
+                        "method": "GET"
+                    },
+                    "runtimeConfiguration": {
+                        "contentTransfer": {
+                            "transferMode": "Chunked"
+                        }
+                    }
+                },
+                "Parse_JSON": {
+                    "runAfter": {
+                        "HTTP": [
+                            "Succeeded"
+                        ]
+                    },
+                    "type": "ParseJson",
+                    "inputs": {
+                        "content": "@body('HTTP')",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "coord": {
+                                    "type": "object",
+                                    "properties": {
+                                        "lon": {
+                                            "type": "number"
+                                        },
+                                        "lat": {
+                                            "type": "number"
+                                        }
+                                    }
+                                },
+                                "weather": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "main": {
+                                                "type": "string"
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "icon": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "id",
+                                            "main",
+                                            "description",
+                                            "icon"
+                                        ]
+                                    }
+                                },
+                                "base": {
+                                    "type": "string"
+                                },
+                                "main": {
+                                    "type": "object",
+                                    "properties": {
+                                        "temp": {
+                                            "type": "number"
+                                        },
+                                        "feels_like": {
+                                            "type": "number"
+                                        },
+                                        "temp_min": {
+                                            "type": "number"
+                                        },
+                                        "temp_max": {
+                                            "type": "number"
+                                        },
+                                        "pressure": {
+                                            "type": "integer"
+                                        },
+                                        "humidity": {
+                                            "type": "integer"
+                                        },
+                                        "sea_level": {
+                                            "type": "integer"
+                                        },
+                                        "grnd_level": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "visibility": {
+                                    "type": "integer"
+                                },
+                                "wind": {
+                                    "type": "object",
+                                    "properties": {
+                                        "speed": {
+                                            "type": "number"
+                                        },
+                                        "deg": {
+                                            "type": "integer"
+                                        },
+                                        "gust": {
+                                            "type": "number"
+                                        }
+                                    }
+                                },
+                                "clouds": {
+                                    "type": "object",
+                                    "properties": {
+                                        "all": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "dt": {
+                                    "type": "integer"
+                                },
+                                "sys": {
+                                    "type": "object",
+                                    "properties": {
+                                        "country": {
+                                            "type": "string"
+                                        },
+                                        "sunrise": {
+                                            "type": "integer"
+                                        },
+                                        "sunset": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "timezone": {
+                                    "type": "integer"
+                                },
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "cod": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                },
+                "Condition": {
+                    "actions": {
+                        "Send_an_email_(V2)_1": {
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['outlook']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "body": {
+                                    "To": "sandeepthakhur16@gmail.com",
+                                    "Subject": "🌩️ Weather Alert - Auto Notification",
+                                    "Body": "<p class=\"editor-paragraph\">Hi,<br><br>This is an automated alert. The weather condition is @{body('Parse_JSON')?['weather'][0]['main']} and wind speed is above @{body('Parse_JSON')?['wind']?['speed']}.<br><br>Please take necessary precautions.<br><br>– Your Weather Alert App</p><br>",
+                                    "Importance": "Normal"
+                                },
+                                "path": "/v2/Mail"
+                            }
+                        },
+                        "Add_a_row_into_a_table": {
+                            "runAfter": {
+                                "Send_an_email_(V2)_1": [
+                                    "Succeeded"
+                                ]
+                            },
+                            "metadata": {
+                                "93CFCB7981658879!sdab8ee8cc4954e58934451d22f837434": "/WeatherData.xlsx"
+                            },
+                            "type": "ApiConnection",
+                            "inputs": {
+                                "host": {
+                                    "connection": {
+                                        "name": "@parameters('$connections')['excelonline']['connectionId']"
+                                    }
+                                },
+                                "method": "post",
+                                "body": {
+                                    "DateTime": "@formatDateTime(convertTimeZone(utcNow(), 'UTC', 'India Standard Time'),'dd-MMM-yyyy hh:mm:ss tt')",
+                                    "Temperature": "@body('HTTP')['main']['temp']",
+                                    "Weather": "@body('HTTP')['weather'][0]['main']",
+                                    "WindSpeed": "@body('HTTP')['wind']['speed']"
+                                },
+                                "path": "/codeless/v1.2/drives/me/items/@{encodeURIComponent('93CFCB7981658879!sdab8ee8cc4954e58934451d22f837434')}/workbook/tables/@{encodeURIComponent('{44006E6D-AD9E-4C43-8C01-44D168DB281F}')}/rows",
+                                "queries": {
+                                    "source": "me",
+                                    "dateTimeFormat": "Serial Number"
+                                }
+                            }
+                        }
+                    },
+                    "runAfter": {
+                        "Parse_JSON": [
+                            "Succeeded"
+                        ]
+                    },
+                    "else": {
+                        "actions": {}
+                    },
+                    "expression": {
+                        "or": [
+                            {
+                                "equals": [
+                                    "@body('HTTP')?['weather'][0]['main']",
+                                    "Thunderstorm"
+                                ]
+                            },
+                            {
+                                "greater": [
+                                    "@body('Parse_JSON')?['wind']?['speed']",
+                                    0.5
+                                ]
+                            }
+                        ]
+                    },
+                    "type": "If"
+                },
+                "Send_an_email_(V2)": {
+                    "runAfter": {
+                        "Condition": [
+                            "Succeeded"
+                        ]
+                    },
+                    "type": "ApiConnection",
+                    "inputs": {
+                        "host": {
+                            "connection": {
+                                "name": "@parameters('$connections')['outlook']['connectionId']"
+                            }
+                        },
+                        "method": "post",
+                        "body": {
+                            "To": "sandeepthakhur16@gmail.com",
+                            "Subject": "Weather Alert Logic App Triggered Successfully",
+                            "Body": "<p class=\"editor-paragraph\">Hello,<br><br>This is a confirmation that the Automated Weather Alert Logic App ran successfully at .<br><br>Weather data was fetched and processed.</p><br>"
+                        },
+                        "path": "/v2/Mail"
+                    }
+                }
+            },
+            "outputs": {}
+        },
+        "parameters": {
+            "$connections": {
+                "value": {
+                    "outlook": {
+                        "id": "/subscriptions/e810d570-61b3-4cff-96c2-498a37e67b60/providers/Microsoft.Web/locations/canadacentral/managedApis/outlook",
+                        "connectionId": "/subscriptions/e810d570-61b3-4cff-96c2-498a37e67b60/resourceGroups/sandeep/providers/Microsoft.Web/connections/outlook",
+                        "connectionName": "outlook"
+                    },
+                    "excelonline": {
+                        "id": "/subscriptions/e810d570-61b3-4cff-96c2-498a37e67b60/providers/Microsoft.Web/locations/canadacentral/managedApis/excelonline",
+                        "connectionId": "/subscriptions/e810d570-61b3-4cff-96c2-498a37e67b60/resourceGroups/sandeep/providers/Microsoft.Web/connections/excelonline",
+                        "connectionName": "excelonline"
+                    }
+                }
+            }
+        },
+        "endpointsConfiguration": {
+            "workflow": {
+                "outgoingIpAddresses": [
+                    {
+                        "address": "52.233.29.92"
+                    },
+                    {
+                        "address": "52.228.39.244"
+                    },
+                    {
+                        "address": "40.85.250.135"
+                    },
+                    {
+                        "address": "40.85.250.212"
+                    },
+                    {
+                        "address": "13.71.186.1"
+                    },
+                    {
+                        "address": "40.85.252.47"
+                    },
+                    {
+                        "address": "13.71.184.150"
+                    },
+                    {
+                        "address": "20.104.13.249"
+                    },
+                    {
+                        "address": "20.104.9.221"
+                    },
+                    {
+                        "address": "20.48.133.133"
+                    },
+                    {
+                        "address": "20.48.132.222"
+                    },
+                    {
+                        "address": "20.175.241.76"
+                    },
+                    {
+                        "address": "20.116.229.92"
+                    },
+                    {
+                        "address": "4.172.57.144"
+                    },
+                    {
+                        "address": "52.237.56.228"
+                    },
+                    {
+                        "address": "20.116.231.222"
+                    },
+                    {
+                        "address": "20.116.229.57"
+                    },
+                    {
+                        "address": "4.172.57.52"
+                    },
+                    {
+                        "address": "20.116.230.54"
+                    }
+                ],
+                "accessEndpointIpAddresses": [
+                    {
+                        "address": "13.88.249.209"
+                    },
+                    {
+                        "address": "52.233.30.218"
+                    },
+                    {
+                        "address": "52.233.29.79"
+                    },
+                    {
+                        "address": "40.85.241.105"
+                    },
+                    {
+                        "address": "20.104.14.9"
+                    },
+                    {
+                        "address": "20.48.133.182"
+                    },
+                    {
+                        "address": "20.175.241.90"
+                    },
+                    {
+                        "address": "20.116.229.122"
+                    },
+                    {
+                        "address": "4.172.59.88"
+                    },
+                    {
+                        "address": "52.237.58.32"
+                    },
+                    {
+                        "address": "20.116.231.233"
+                    },
+                    {
+                        "address": "20.116.229.68"
+                    },
+                    {
+                        "address": "4.172.57.90"
+                    },
+                    {
+                        "address": "20.116.230.165"
+                    }
+                ]
+            },
+            "connector": {
+                "outgoingIpAddresses": [
+                    {
+                        "address": "52.237.32.212"
+                    },
+                    {
+                        "address": "52.237.24.126"
+                    },
+                    {
+                        "address": "13.71.170.208/28"
+                    },
+                    {
+                        "address": "13.71.175.160/27"
+                    },
+                    {
+                        "address": "20.48.200.192/27"
+                    },
+                    {
+                        "address": "20.48.200.224/28"
+                    },
+                    {
+                        "address": "40.82.184.43"
+                    },
+                    {
+                        "address": "40.82.184.6"
+                    }
+                ]
+            }
+        }
+    },
+    "id": "/subscriptions/e810d570-61b3-4cff-96c2-498a37e67b60/resourceGroups/sandeep/providers/Microsoft.Logic/workflows/WeatherAlertApp",
+    "name": "WeatherAlertApp",
+    "type": "Microsoft.Logic/workflows",
+    "location": "canadacentral",
+    "apiVersion": "2015-08-01-preview"
+}
