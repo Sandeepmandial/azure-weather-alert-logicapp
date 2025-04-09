@@ -24,3 +24,12 @@ This mini project demonstrates how to build an **automated weather alert system*
 - **Twilio SMS** (optional)
 - **HTTP GET Request & JSON Parsing**
 - **Excel via OneDrive (for logging)**
+
+---
+
+### 🔧 How to Run This Logic App
+
+1. Open Azure Portal → Create a new Logic App (Consumption or Standard).
+2. Go to Code View → Paste content from `logicapp-workflow.json`.
+3. Set your API key, city name, and email in the correct fields.
+4. Save and test the workflow.
